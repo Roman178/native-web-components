@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <script>
+      class MyComponent extends HTMLElement {
+        static baseUrl =
+          "https://suggestions.dadata.ru/suggestions/api/4_1/rs/suggest/party";
+        static token = "2eabf34f44f9ac78b5d93d709082f106a90068a8";
+
+        constructor() {
+          super();
+          this.shadow = this.attachShadow({ mode: "open" });
+          this.shadow.innerHTML = `
+                <form class="form">
+                  <label class="label" for="name_short">
+                    Краткое наименование
+                    <input id="name_short" />
+                  </label>
+                  <label class="label" for="name_full">
+                    Полное наименование
+                    <input id="name_full" />
+                  </label>
+                  <label class="label" for="inn_kpp">
+                    ИНН / КПП
+                    <input id="inn_kpp" />
+                  </label>
+                  <label class="label" for="address">
+                    Адрес
+                    <input id="address" />
+                  </label>
+                </form>
+                <style>
+                  .form {
+                    display: flex;
+                    flex-direction: column;
+                   }
+
+                  .label {
+                    display: flex;
+                    flex-direction: column;
+                   }
+
+                  .label:first-of-type {
+                    position: relative;
+                   }
+
+                   .list {
+                    margin: 0;
+                    padding: 0;
+                    position: absolute;
+                    bottom: 0;
+                    left: 0;
+                    transform: translateY(100%);
+                    background-color: #e2e2e2;
+                    width: 100%;
+                   }
+
+                   .item {
+                       cursor: pointer;
+                   }
+                </style>
+            `;
+
+          this.list = document.createElement("ul");
+          this.list.classList.add("list");
+          this.shadow.querySelector(".label:first-of-type").append(this.list);
+          this.suggestions = [];
+        }
+
+        connectedCallback() {
+          const inputNameShort = this.shadow.querySelector("#name_short");
+          inputNameShort.addEventListener("input", () => {
+            this.getCompanies(inputNameShort.value)
+              .then((data) => {
+                this.suggestions = data.suggestions;
+                this.renderCompaniesList(this.suggestions);
+              })
+              .catch((err) => console.error(err));
+          });
+
+          inputNameShort.addEventListener("blur", () => {
+            this.renderCompaniesList([]);
+          });
+
+          inputNameShort.addEventListener("focus", () => {
+            this.renderCompaniesList(this.suggestions);
+          });
+        }
+
+        renderCompaniesList(suggestions) {
+          this.list.innerHTML = "";
+          if (suggestions.length === 0) return;
+          suggestions.forEach((suggestion) => {
+            const li = document.createElement("li");
+            li.classList.add("item");
+            li.innerText = suggestion.data.name.full;
+            this.list.append(li);
+          });
+        }
+
+        async getCompanies(value) {
+          return fetch(MyComponent.baseUrl, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Accept: "application/json",
+              Authorization: `Token ${MyComponent.token}`,
+            },
+            body: JSON.stringify({
+              query: value,
+            }),
+          }).then((res) => res.json());
+        }
+
+        //   disconnectedCallback() {
+        //     console.log("Custom square element removed from page.");
+        //   }
+
+        //   adoptedCallback() {
+        //     console.log("Custom square element moved to new page.");
+        //   }
+
+        //   attributeChangedCallback(name, oldValue, newValue) {
+        //     console.log("Custom square element attributes changed.");
+        //     updateStyle(this);
+        //   }
+      }
+      customElements.define("my-component", MyComponent);
+    </script>
+    <my-component></my-component>
+  </body>
+</html>
