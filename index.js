@@ -93,16 +93,17 @@ class SearchCompaniesForm extends HTMLElement {
     this.list.classList.add("list");
     this.shadow.querySelector(".label:first-of-type").append(this.list);
     this.suggestions = [];
+
     this.inputNameShort = this.shadow.querySelector("#name_short");
     this.inputNameFull = this.shadow.querySelector("#name_full");
     this.inputInnKpp = this.shadow.querySelector("#inn_kpp");
     this.inputAddress = this.shadow.querySelector("#address");
+    this.inputSearchCompany = this.shadow.querySelector("#search_company");
   }
 
   connectedCallback() {
-    const inputSearchCompany = this.shadow.querySelector("#search_company");
-    inputSearchCompany.addEventListener("input", () => {
-      this.getCompanies(inputSearchCompany.value)
+    this.inputSearchCompany.addEventListener("input", () => {
+      this.getCompanies(this.inputSearchCompany.value)
         .then((data) => {
           this.suggestions = data.suggestions;
           this.renderCompaniesList(this.suggestions);
@@ -110,11 +111,11 @@ class SearchCompaniesForm extends HTMLElement {
         .catch((err) => console.error(err));
     });
 
-    inputSearchCompany.addEventListener("blur", (e) => {
+    this.inputSearchCompany.addEventListener("blur", () => {
       setTimeout(() => this.renderCompaniesList([]), 100);
     });
 
-    inputSearchCompany.addEventListener("focus", () => {
+    this.inputSearchCompany.addEventListener("focus", () => {
       this.renderCompaniesList(this.suggestions);
     });
   }
@@ -137,6 +138,7 @@ class SearchCompaniesForm extends HTMLElement {
       li.appendChild(companyAddress);
 
       li.addEventListener("click", () => {
+        this.inputSearchCompany.value = suggestion.value;
         this.inputNameShort.value = suggestion.value;
         this.inputNameFull.value = suggestion.data.name.full_with_opf;
         this.inputInnKpp.value = suggestion.data.kpp
